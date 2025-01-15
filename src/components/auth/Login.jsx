@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
-  Paper,
+  Box,
+  Typography,
   TextField,
   Button,
-  Typography,
-  Box,
+  Paper,
   Alert,
-  Link
+  Link,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import api from '../../services/Api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,17 +29,15 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    setError('');
+
     try {
-      // Here you would typically make an API call to authenticate
-      localStorage.setItem('user', JSON.stringify({ email: formData.email }));
+      const response = await api.post('/auth/login', formData);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       navigate('/home');
     } catch (err) {
-      setError(err.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'Login failed');
     }
   };
 
@@ -52,27 +51,18 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5">
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
             Sign In
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit}>
             <TextField
               margin="normal"
               required
@@ -105,7 +95,7 @@ const Login = () => {
             >
               Sign In
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
+            <Box textAlign="center">
               <Link href="/signup" variant="body2">
                 Don't have an account? Sign Up
               </Link>
