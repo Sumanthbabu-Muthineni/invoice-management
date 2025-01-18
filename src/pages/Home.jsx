@@ -37,19 +37,31 @@ const Home = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await api.get('/invoices');
-      const invoices = response.data;
-      
-      const stats = {
-        totalInvoices: invoices.length,
-        paidInvoices: invoices.filter(inv => inv.status === 'paid').length,
-        pendingAmount: invoices
-          .filter(inv => inv.status !== 'paid')
-          .reduce((sum, inv) => sum + (inv.amount || 0), 0)
-      };
-      
-      setStats(stats);
+      // First try to get stats from the summary endpoint
+      const response = await api.get('/invoices/stats/summary');
+      if (response.data.success) {
+        setStats({
+          totalInvoices: response.data.data.totalInvoices,
+          paidInvoices: response.data.data.paidInvoices,
+          pendingAmount: response.data.data.unpaidAmount
+        });
+      } else {
+        // Fallback to calculating from all invoices
+        const invoicesResponse = await api.get('/invoices');
+        const invoices = invoicesResponse.data.data; // Note the .data.data here
+        
+        const calculatedStats = {
+          totalInvoices: invoices.length,
+          paidInvoices: invoices.filter(inv => inv.status === 'paid').length,
+          pendingAmount: invoices
+            .filter(inv => inv.status !== 'paid')
+            .reduce((sum, inv) => sum + (inv.amount || 0), 0)
+        };
+        
+        setStats(calculatedStats);
+      }
     } catch (err) {
+      console.error('Dashboard stats error:', err);
       setError('Failed to fetch dashboard statistics');
     } finally {
       setIsLoading(false);
