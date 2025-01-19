@@ -33,7 +33,7 @@ const Home = () => {
     if (!token) {
       navigate('/login');
     }
-  };
+  };   
 
   const fetchDashboardStats = async () => {
     try {
